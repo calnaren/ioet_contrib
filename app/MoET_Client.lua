@@ -8,6 +8,7 @@
 require "cord" -- scheduler / fiber library
 LED = require("led")
 acc = require("acc")
+TMP = require("tmp")
 brd = LED:new("GP0")
 
 Button = require("button")
@@ -26,6 +27,11 @@ buttonType = 0
 cord.new(function()
    accel = acc:new()
    accel:init()
+end)
+
+cord.new(function()
+   tmp = TMP:new()
+   tmp:init()
 end)
 
 ipaddr = storm.os.getipaddr()
@@ -96,13 +102,13 @@ clientAccelerometer = function()
 end
 
 -- send echo on each button press
-clientMagnetometer = function()
+clientTemperature = function()
    buttonType = 2
    count = 0
    grn:flash(1)
    while buttonType == 2 do
-      ax, ay, az, mx, my, mz = accel:get()
-      local msg = string.format("3:%d %d %d", mx, my, mz)
+      temp = tmp:getTemp()
+      local msg = string.format("3:%d", temp)
       print(msg)
       -- send upd echo to link local all nodes multicast
       storm.net.sendto(csock, msg, "ff02::1",7) 
@@ -125,7 +131,7 @@ btn2:whenever("RISING",function()
 -- button press runs client
 btn3:whenever("RISING",function() 
 		print("Run client Gyroscope")
-                cord.new(function() clientMagnetometer() end)
+                cord.new(function() clientTemperature() end)
 		      end)
 -- enable a shell
 sh = require "stormsh"

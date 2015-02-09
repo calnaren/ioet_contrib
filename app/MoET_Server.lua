@@ -64,7 +64,7 @@ serverHandler = function(payload, from, port)
 			successes = 0
 			local value = string.sub(payload,3,string.len(payload))
 			if iterations >= 10 then 
-				cord.new(function() lcd:writeString(string.sub("Mag: " .. value .. "                                         ",1,32)) end)
+				cord.new(function() lcd:writeString(string.sub("Temperature: " .. value .. "°C                                         ",1,32)) end)
 				iterations = 0
 			end
 			

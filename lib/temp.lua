@@ -48,7 +48,7 @@ function TEMP:getTemp()
     end
     --Converting temperature into Celsius (each LSB = 1/32 Deg. Celsius)
     local temperature = dat:get_as(storm.array.INT16_BE, 0)/32
-    return temperature, config, mfg_id, device_id
+    return temperature
 end
 
 function TEMP:getStatus()
