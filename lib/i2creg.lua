@@ -38,4 +38,17 @@ function REG:w(reg, value)
     return rv
 end
 
+function REG:w16(reg, value1, value2)
+    -- TODO:
+    -- create array with address and value
+    -- write
+    -- check return value
+    local arr = storm.array.create(3,storm.array.UINT8)
+    arr:set(1,reg)
+    arr:set(2, value1)
+    arr:set(3, value2)
+    local rv = cord.await(storm.i2c.write, self.port + self.address, storm.i2c.START + storm.i2c.STOP, arr)
+    return rv
+end
+
 return REG

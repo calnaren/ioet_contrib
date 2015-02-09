@@ -1,3 +1,11 @@
+REG = require "reg"
+string = require "string"
+
+--[[ References: The best documentation I could find about how to
+LCD was actually a C++ library for it, at
+Seeed-Studio/Grove_LCD_RGB_Backlight. I used the existing code
+to figure out what messages I needed to send via I2C to actuate the
+self. ]]--
 
 
 local codes = {
@@ -37,66 +45,129 @@ local codes = {
     LCD_1LINE = 0x00,
     LCD_5x10DOTS = 0x04,
     LCD_5x8DOTS = 0x00,
+    
+    -- flags for communication
+    LCD_COMMAND = 0x80,
+    LCD_WRITE = 0x40,
+    
+    RED_ADDR = 0x04,
+    GREEN_ADDR = 0x03,
+    BLUE_ADDR = 0x02,
+    
+    LED_OUTPUT = 0x08,
 }
 
 local LCD = {}
 
 
-LCD.command = function(val)
-    --TODO
-end
-LCD.write = function (char)
-    --TODO
+function LCD:command(val)
+    self.lcdreg:w(codes.LCD_COMMAND, val)
 end
 
-LCD.init = function(lines, dotsize)
-            LCD._df = 0
-            if lines == 2 then LCD._df = codes.LCD_2LINE end
-            LCD._df = LCD._df + codes.LCD_8BITMODE
-            LCD.nl = lines
-            LCD._dc = 0
-            LCD._dm = codes.LCD_ENTRYLEFT + codes.LCD_ENTRYSHIFTDECREMENT;
-            LCD._cl = 0
-            if dotsize ~=0 and lines ~= 1 then LCD._df = bit.bor(LCD._df, codes.LCD_5x8DOTS) end
+-- Writes a character to the cursor's current position. --
+function LCD:write(char)
+    self.lcdreg:w(codes.LCD_WRITE, char)
+end
+
+function LCD:new(lcd_port, lcd_addr, rgb_port, rgb_addr)
+    self.lcdreg = REG:new(lcd_port, lcd_addr)
+    self.rgbreg = REG:new(rgb_port, rgb_addr)
+    self.red = -1
+    self.green = -1
+    self.blue = -1
+    return self
+end
+
+function LCD:init(lines, dotsize)
+            self._df = 0
+            if lines == 2 then self._df = codes.LCD_2LINE end
+            self._df = self._df + codes.LCD_8BITMODE
+            self.nl = lines
+            self._dc = 0
+            self._dm = codes.LCD_ENTRYLEFT + codes.LCD_ENTRYSHIFTDECREMENT;
+            self._cl = 0
+            if dotsize ~=0 and lines ~= 1 then self._df = bit.bor(self._df, codes.LCD_5x8DOTS) end
             -- seriously, the chip requires this...
             cord.await(storm.os.invokeLater, 200*storm.os.MILLISECOND)
-            LCD.command(codes.LCD_FUNCTIONSET + LCD._df)
+            self:command(codes.LCD_FUNCTIONSET + self._df)
             cord.await(storm.os.invokeLater, 50*storm.os.MILLISECOND)
-            LCD.command(codes.LCD_FUNCTIONSET + LCD._df)
+            self:command(codes.LCD_FUNCTIONSET + self._df)
             cord.await(storm.os.invokeLater, 50*storm.os.MILLISECOND)
-            LCD.command(codes.LCD_FUNCTIONSET + LCD._df)
+            self:command(codes.LCD_FUNCTIONSET + self._df)
             cord.await(storm.os.invokeLater, 50*storm.os.MILLISECOND)
-            LCD.command(codes.LCD_FUNCTIONSET + LCD._df)
+            self:command(codes.LCD_FUNCTIONSET + self._df)
             cord.await(storm.os.invokeLater, 50*storm.os.MILLISECOND)
-            LCD.command(0x08)
+            self:command(0x08)
             cord.await(storm.os.invokeLater, 50*storm.os.MILLISECOND)
-            LCD.command(0x01)
+            self:command(0x01)
             cord.await(storm.os.invokeLater, 50*storm.os.MILLISECOND)
-            LCD.command(0x6)
+            self:command(0x6)
             cord.await(storm.os.invokeLater, 200*storm.os.MILLISECOND)
-            LCD._dc  = codes.LCD_DISPLAYON + codes.LCD_CURSORON + codes.LCD_BLINKON
-            LCD.display()
+            self._dc  = codes.LCD_DISPLAYON --+codes.LCD_CURSORON + codes.LCD_BLINKON
+            self:display()
             cord.await(storm.os.invokeLater, 50*storm.os.MILLISECOND)
+            
+            -- Initialization work for the backlight LED. --
+            self.rgbreg:w(0, 0)
+            self.rgbreg:w(1, 0)
+            self.rgbreg:w(codes.LED_OUTPUT, 0xAA)
 end
-LCD.setCursor = function(row, col)
+
+-- Sets the position of the cursor. ROW and COL are 0-indexes --
+function LCD:setCursor(row, col)
     if row == 0 then
         col = bit.bor(col, 0x80)
     else
         col = bit.bor(col, 0xc0)
     end
-    LCD.command(col)
+    self:command(col)
 end
-LCD.display = function ()
-    LCD._dc = bit.bor(LCD._dc, codes.LCD_DISPLAYON)
-    LCD.command(codes.LCD_DISPLAYCONTROL + LCD._dc)
+function LCD:display()
+    self._dc = bit.bor(self._dc, codes.LCD_DISPLAYON)
+    self:command(codes.LCD_DISPLAYCONTROL + self._dc)
 end
-LCD.nodisplay = function ()
-    LCD._dc = bit.bor(LCD._dc, bit.bnor(codes.LCD_DISPLAYON))
-    LCD.command(codes.LCD_DISPLAYCONTROL + LCD._dc)
+function LCD:nodisplay()
+    self._dc = bit.bor(self._dc, bit.bnor(codes.LCD_DISPLAYON))
+    self:command(codes.LCD_DISPLAYCONTROL + self._dc)
 end
-LCD.clear = function ()
-    LCD.command(codes.LCD_CLEARDISPLAY)
-    cord.await(storm.os.invokeLater, 2*storm.os.MILLISECOND)
+-- Erases the screen. --
+function LCD:clear()
+    self:command(codes.LCD_CLEARDISPLAY)
+    cord:await(storm.os.invokeLater, 50*storm.os.MILLISECOND)
+end
+
+-- Writes a string to the LCD display at the cursor. --
+function LCD:writeString(str)
+    local i
+    for i = 1, #str do
+        self:write(string.byte(str:sub(i, i)))
+	if i == 16 then self:setCursor(1,0) end
+    end
+    self:setCursor(0,0)
+end
+
+--[[ Sets the color of the RGB backlight. RED, GREEN, and BLUE
+should be integers from 0 to 255. ]]--
+function LCD:setBackColor(red, green, blue)
+    local result
+    if red ~= self.red then
+        result = self.rgbreg:w(codes.RED_ADDR, red)
+        if result ~= nil then
+            self.red = red
+        end
+    end
+    if green ~= self.green then
+        result = self.rgbreg:w(codes.GREEN_ADDR, green)
+        if result ~= nil then
+            self.green = green
+        end
+    end
+    if blue ~= self.blue then
+        result = self.rgbreg:w(codes.BLUE_ADDR, blue)
+        if result ~= nil then
+            self.blue = blue
+        end
+    end
 end
 
 return LCD
