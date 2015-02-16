@@ -8,7 +8,7 @@
 require "cord" -- scheduler / fiber library
 LED = require("led")
 acc = require("acc")
-TMP = require("tmp")
+--TMP = require("tmp")
 brd = LED:new("GP0")
 
 Button = require("button")
@@ -29,10 +29,10 @@ cord.new(function()
    accel:init()
 end)
 
-cord.new(function()
+--[[cord.new(function()
    tmp = TMP:new()
    tmp:init()
-end)
+end)]]--
 
 ipaddr = storm.os.getipaddr()
 ipaddrs = string.format("%02x%02x:%02x%02x:%02x%02x:%02x%02x::%02x%02x:%02x%02x:%02x%02x:%02x%02x",
@@ -107,7 +107,8 @@ clientTemperature = function()
    count = 0
    grn:flash(1)
    while buttonType == 2 do
-      temp = tmp:getTemp()
+      --temp = tmp:getTemp()
+      temp = 0
       local msg = string.format("3:%d", temp)
       print(msg)
       -- send upd echo to link local all nodes multicast
