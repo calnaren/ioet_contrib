@@ -4,38 +4,22 @@ LCD = require("lcd") -- lcd display
 print ("Base  test ")
 
 sh = require "stormsh"
---shield = require("starter")
 Button = require("button")
 cport=1525
 
-serviceList = {"example1", "example2"}
-serviceTable={example1={"1234"}, example2={"78","90"}}
-serviceOptions = {setBool={true, false}}
---flattened_table={}
+sL = {"example1", "example2"}
+sT={example1={"1234"}, example2={"78","90"}}
+sO = {setBool={true, false}}
 
-touchButton = Button:new("D4")
-normalButton = Button:new("D3")
+tB = Button:new("D4")
+nB = Button:new("D3")
 
---shield.Button.start()
 lcd = LCD:new(storm.i2c.EXT, 0x7c, storm.i2c.EXT, 0xc4)
 
 cord.new(function() lcd:init(2, 1) end)
 number=0
---[[
-function flat(ip,entry)
-	for i,j in pairs(v) do
-		if type(j)=="table" then 
-			for a,b in pairs(j) do 
-				return string.format("%s,%s",ip,i)	
-			end
-		else
-			print()
-		end
-	end
-end
-]]--
 
-function notHasService(list, service)
+function notServ(list, service)
 for i=1,#list do
 	if list[i] == service then
 		return false
@@ -47,21 +31,14 @@ end
 function addToTable(from,payload)
 	p=storm.mp.unpack(payload)
 	for k,v in pairs(p) do
---		if serviceTable[from]==nil then
---			serviceTable[from]={}
---		end
 		if k ~= "id" then
---		if table[from][k]==nil then
---				flattened_table[number]=string.format("%s,%s",from,k)--flat(from,v)
---				number=number+1
---			end
-			if serviceTable[k] == nil then
-				serviceTable[k] = {from}
+			if sT[k] == nil then
+				sT[k] = {from}
 			else
-				table.insert(serviceTable[k], from)
+				table.insert(sT[k], from)
 			end
-			if notHasService(serviceList, k) then
-				table.insert(serviceList, k)
+			if notServ(sL, k) then
+				table.insert(sL, k)
 			end
 		end
 	end
@@ -69,65 +46,13 @@ end
 
 function svc_stdout(from_ip, from_port,msg)
 	print(string.format("[STDOUT] (ip=%s, port=%d) %s", from_ip, from_port, msg))
-	-- lcd:writeString(string.format("[STDOUT] (ip=%s, port=%d) %s", from_ip, from_port, msg))
 end
---[[
-function pprint(table)
-	print(" ")
-	for k,v in pairs(table) do
-		for i,j in pairs(v) do
-			if type(j)=="table" then 
-				for a,b in pairs(j) do 
-					print(k,i,a,b)
-				end
-			else
-				print(k,i,j)
-			end
-		end
-	end
-	print(" ")
-end
-]]--
---[[
-cord.new(function()
-	while true do
-		cord.await(storm.os.invokeLater, 1000*storm.os.MILLISECOND)
-		--lcd:clear()
-		for k,v in pairs(table) do
-			for i,j in pairs(v) do
-				if type(j)=="table" then 
-					for a,b in pairs(j) do 
-						--print(k,i,a,b)
-						lcd:writeString(string.format("%s %s", k, i))
-						cord.await(storm.os.invokeLater, 1000*storm.os.MILLISECOND)
-					end
-				else
-					--print(k,i,j)
-					lcd:writeString(string.format("%s %s", k, i))
-					cord.await(storm.os.invokeLater, 1000*storm.os.MILLISECOND)
-				end
-			end
-		end
-	end
-end)
-]]--
-
-cord.new(function()
-
-
-end)
 
 asock= storm.net.udpsocket(cport,
 		function(payload, from, port)
 		addToTable(from,payload)
 		p=storm.mp.unpack(payload)
-		--print(string.format("echo %s %d:%s",from,port,p["id"]))
 		print("table is")
-		--pprint(table)
-		--print("flattened_table\n")
---		for k,v in pairs(flattened_table) do 
---			print(k,v)
---		end
 end)
 
 sendSock = storm.net.udpsocket(1526,
@@ -135,57 +60,55 @@ sendSock = storm.net.udpsocket(1526,
 			print("Received")
 		end)
 
-serviceIndex = 1
-ipIndex = 1
-currentState = 1
-optionsIndex = 1
-currentService = ""
-currentIP = ""
-currentOption = ""
+sI = 1
+ipI = 1
+cState = 1
+oI = 1
+cService = ""
+cIP = ""
+cOption = ""
 
 scrolling = function()
-	if currentState == 1 then
-		if #serviceList > 0 then
-			if serviceIndex == #serviceList+1 then
-				serviceIndex = 1
+	if cState == 1 then
+		if #sL > 0 then
+			if sI == #sL+1 then
+				sI = 1
 			end
-			--lcd:clear()
 			clearLCD()
-			lcd:writeString(string.format("%s", serviceList[serviceIndex]))
-			serviceIndex = serviceIndex + 1
+			lcd:writeString(string.format("%s", sL[sI]))
+			sI = sI + 1
 		else
-			--lcd:clear()
 			clearLCD()
 			lcd:writeString("No items")
 		end
-	elseif currentState == 2 then
-		currentService = serviceList[serviceIndex]
+	elseif cState == 2 then
+		cService = sL[sI-1]
 		clearLCD()
-		currentIP = serviceTable[currentService][ipIndex]
-		print(currentService, currentIP)
-		lcd:writeString(string.format("%s", serviceTable[currentService][ipIndex]))
-		ipIndex = ipIndex + 1
-		if ipIndex == #serviceTable[currentService]+1 then
-			ipIndex = 1
+		cIP = sT[cService][ipI]
+		print(cService, cIP)
+		lcd:writeString(string.format("%s", sT[cService][ipI]))
+		ipI = ipI + 1
+		if ipI == #sT[cService]+1 then
+			ipI = 1
 		end
-	elseif currentState == 3 then
-		currentOption = serviceOptions["setBool"][optionsIndex]
-		if currentOption then
+	elseif cState == 3 then
+		cOption = sO["setBool"][oI]
+		if cOption then
 			str = "true"
 		else
 			str = "false"
 		end
 		lcd:writeString(str)
-		optionsIndex  = optionsIndex + 1
-		if optionsIndex == 3 then
-			optionsIndex = 1
+		oI  = oI + 1
+		if oI == 3 then
+			oI = 1
 		end
 	end
 end
 
 sendMessage = function(message)
 	handle = storm.os.invokePeriodically(600*storm.os.MILLISECOND, function()
-		storm.net.sendto(sendSock, message, currentIP, 1526)
+		storm.net.sendto(sendSock, message, cIP, 1526)
 	end)
 	cord.await(storm.os.invokeLater, 10*storm.os.SECOND)
 	storm.os.cancel(handle)
@@ -193,21 +116,21 @@ end
 
 enter = function()
 	clearLCD()
-	if currentState == 1 then
+	if cState == 1 then
 		lcd:writeString("Touch to see IP addresses")
-	elseif currentState == 2 then
+	elseif cState == 2 then
 		--lcd.writeString("Touch to see options")
-	elseif currentState == 3 then
+	elseif cState == 3 then
 		--lcd.writeString("Sending request")
-		message = {currentService, {currentOption}}
+		message = {cService, {cOption}}
 		packedMessage = storm.mp.pack(message)
 		sendMessage(packedMessage)
 	end
-	currentState = currentState + 1
-	if currentState == 4 then
-		currentState = 1
-		ipIndex = 1
-		serviceIndex = 1
+	cState = cState + 1
+	if cState == 4 then
+		cState = 1
+		ipI = 1
+		sI = 1
 	end
 end
 
@@ -217,25 +140,12 @@ end
 
 callService = function()
 end
---[[
-shield.Button.whenever(1, "RISING",function() 
-                cord.new(function() upService() end)
-		      end)
 
-shield.Button.whenever(2, "RISING",function() 
-                cord.new(function() downService() end)
-		      end)
-
-shield.Button.whenever(3, "RISING",function() 
-                cord.new(function() callService() end)
-		      end)
-]]--
-
-touchButton:whenever("RISING", function()
+tB:whenever("RISING", function()
 		cord.new(function() scrolling() end)
 			end)
 
-normalButton:whenever("RISING", function()
+nB:whenever("RISING", function()
 		cord.new(function() enter() end)
 			end)
 
