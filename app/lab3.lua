@@ -9,7 +9,8 @@ cport=1525
 
 sL = {"example1", "example2"}
 sT={example1={"1234"}, example2={"78","90"}}
-sO = {setBool={true, false}}
+sS = {example1="setBool", example2="setBool"}
+sO = {setBool={true, false}, setNumber={0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100}}
 
 tB = Button:new("D4")
 nB = Button:new("D3")
@@ -35,10 +36,12 @@ function addToTable(from,payload)
 			if k ~= "id" then
 				if sT[k] == nil then
 					sT[k] = {from}
+					sS[k] = v.s
 				else
 					tempT = sT[k]
 					table.insert(tempT, from)
 					sT[k] = tempT
+					sS[k] = v.s
 				end
 				if notServ(sL, k) then
 					table.insert(sL, k)
@@ -96,16 +99,22 @@ scrolling = function()
 			ipI = 1
 		end
 	elseif cState == 3 then
-		cOption = sO["setBool"][oI]
-		if cOption then
-			str = "true"
-		else
-			str = "false"
+		opt = sS[cService]
+		if opt == "setBool" then
+			cOption = sO[opt][oI]
+			if cOption then
+				str = "true"
+			else
+				str = "false"
+			end
+		elseif opt == "setNumber" then
+			cOption = sO[opt][oI]
+			str = string.format("%d", cOption)
 		end
 		clearLCD()
 		lcd:writeString(str)
 		oI  = oI + 1
-		if oI == 3 then
+		if oI == #sO[opt] then
 			oI = 1
 		end
 	end
@@ -139,6 +148,7 @@ enter = function()
 		cState = 1
 		ipI = 1
 		sI = 1
+		oI = 1
 	end
 end
 
