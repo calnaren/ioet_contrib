@@ -35,7 +35,9 @@ function addToTable(from,payload)
 			if sT[k] == nil then
 				sT[k] = {from}
 			else
-				table.insert(sT[k], from)
+				tempT = sT[k]
+				table.insert(tempT, from)
+				sT[k] = tempT
 			end
 			if notServ(sL, k) then
 				table.insert(sL, k)
@@ -106,11 +108,13 @@ scrolling = function()
 	end
 end
 
+
 sendMessage = function(message)
 	handle = storm.os.invokePeriodically(600*storm.os.MILLISECOND, function()
+		print("Sending message")
 		storm.net.sendto(sendSock, message, cIP, 1526)
 	end)
-	cord.await(storm.os.invokeLater, 10*storm.os.SECOND)
+	cord.await(storm.os.invokeLater, 5*storm.os.SECOND)
 	storm.os.cancel(handle)
 end
 
@@ -125,6 +129,7 @@ enter = function()
 		message = {cService, {cOption}}
 		packedMessage = storm.mp.pack(message)
 		sendMessage(packedMessage)
+		--print("Sending", cService, cOption)
 	end
 	cState = cState + 1
 	if cState == 4 then
