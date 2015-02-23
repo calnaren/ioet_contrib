@@ -30,17 +30,19 @@ end
 
 function addToTable(from,payload)
 	p=storm.mp.unpack(payload)
-	for k,v in pairs(p) do
-		if k ~= "id" then
-			if sT[k] == nil then
-				sT[k] = {from}
-			else
-				tempT = sT[k]
-				table.insert(tempT, from)
-				sT[k] = tempT
-			end
-			if notServ(sL, k) then
-				table.insert(sL, k)
+	if cState == 1 then 
+		for k,v in pairs(p) do
+			if k ~= "id" then
+				if sT[k] == nil then
+					sT[k] = {from}
+				else
+					tempT = sT[k]
+					table.insert(tempT, from)
+					sT[k] = tempT
+				end
+				if notServ(sL, k) then
+					table.insert(sL, k)
+				end
 			end
 		end
 	end
@@ -100,6 +102,7 @@ scrolling = function()
 		else
 			str = "false"
 		end
+		clearLCD()
 		lcd:writeString(str)
 		oI  = oI + 1
 		if oI == 3 then
@@ -123,9 +126,9 @@ enter = function()
 	if cState == 1 then
 		lcd:writeString("Touch to see IP addresses")
 	elseif cState == 2 then
-		--lcd.writeString("Touch to see options")
+		lcd:writeString("Touch to see options")
 	elseif cState == 3 then
-		--lcd.writeString("Sending request")
+		lcd:writeString("Sending request")
 		message = {cService, {cOption}}
 		packedMessage = storm.mp.pack(message)
 		sendMessage(packedMessage)
