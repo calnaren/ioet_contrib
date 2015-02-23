@@ -36,3 +36,21 @@ function bounds(a)
    end
    return first,last
 end
+
+function ppNestedTable(table)
+  local function nestedTableHelper(level, value)
+    if (type(value) == "table") then
+      local returnString = "\n"
+      for k,v in pairs(value) do
+        returnString = returnString .. string.format("%s %s : %s\n", string.rep("\t",level), k, nestedTableHelper(level+1, v))
+      end
+      return returnString
+    elseif(value ~= nil) then
+      return tostring(value)
+    else
+      return ""
+    end
+  end
+  print(nestedTableHelper(1,table))
+end
+
