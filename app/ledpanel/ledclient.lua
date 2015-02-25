@@ -2,13 +2,14 @@
 require "cord"
 sh = require "stormsh"
 sh.start()
-local svcd = require "svcd"
+-- in global scope now
+require "svcd"
 
 flashers = {}
 
 cord.new(function()
-    cord.await(svcd.init, "ledclient")
-    svcd.advert_received = function(pay, srcip, srcport)
+    cord.await(SVCD.init, "ledclient")
+    SVCD.advert_received = function(pay, srcip, srcport)
         local adv = storm.mp.unpack(pay)
         for k,v in pairs(adv) do
             --These are the services
@@ -34,8 +35,8 @@ function flashem(lednum, times)
             local cmd = storm.array.create(2, storm.array.UINT8)
             cmd:set(1,lednum)
             cmd:set(2,times)
-            local stat = cord.await(svcd.write, k, 0x3003, 0x4005, cmd:as_str(), 300)
-            if stat ~= svcd.OK then
+            local stat = cord.await(SVCD.write, k, 0x3003, 0x4005, cmd:as_str(), 300)
+            if stat ~= SVCD.OK then
                 print "FAIL"
             else
                 print "OK"
@@ -47,7 +48,7 @@ function flashem(lednum, times)
 end
 
 function get_motd(serial)
-    svcd.subscribe("fe80::212:6d02:0:"..serial,0x3003, 0x4008, function(msg)
+    SVCD.subscribe("fe80::212:6d02:0:"..serial,0x3003, 0x4008, function(msg)
         local arr = storm.array.fromstr(msg)
         print ("Got MOTD: ",arr:get_pstring(0))
     end)

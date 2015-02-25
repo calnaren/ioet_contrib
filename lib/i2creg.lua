@@ -56,6 +56,7 @@ function REG:w(reg, values)
     if (rv ~= storm.i2c.OK) then
         print ("ERROR ON I2C: ",rv)
     end
+    return 1
 end
 
 return REG

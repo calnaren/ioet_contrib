@@ -19,7 +19,7 @@ function Button:new(bpin)
 end
 
 function Button:pressed()
-   return storm.io.get(storm.io[self.pin]) 
+   return 1 - storm.io.get(storm.io[self.pin]) 
 end
 
 -------------------
@@ -34,9 +34,34 @@ end
 -- none of these are debounced.
 -------------------
 function Button:whenever (transition, action)
-   assert(storm.io[transition],"Bad transition")
+   assert(storm.io[transition], "Bad transition")
    -- register call back to fire when button is pressed
    storm.io.watch_all(storm.io[transition], storm.io[self.pin], action)
+end
+
+Button.GAP = 250 * storm.os.MILLISECOND
+
+-- A version of Button.whenever that is more reliable. Whenever a button is pressed, waits
+-- for a fixed time before registering any additional events, largely preventing the
+-- action from ocurring multiple times.
+-- The watch is returned in an array-like table. To cancel the watch, cancel the first
+-- element with storm.io.watch_cancel and cancel the second element IF IT IS NOT NIL
+-- with storm.os.cancel.
+-- If your application requires multiple button presses in quick succession, you should
+-- consider lowering Button.GAP
+function Button:whenever_debounced (transition, action)
+    assert(storm.io[transition], "Bad transition")
+    local pin = storm.io[self.pin]
+    local a = {nil, nil}
+    a[1] = storm.io.watch_single(storm.io[transition], pin, function ()
+        action()
+        a[2] = storm.os.invokeLater(Button.GAP, function ()
+            local new = self:whenever_debounced(transition, action)
+            a[1] = new[1]
+            a[2] = new[2]
+            end)
+    end)
+    return a
 end
 
 function Button:when (transition, action)

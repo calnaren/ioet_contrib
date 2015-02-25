@@ -177,6 +177,25 @@ const LUA_REG_TYPE contrib_native_map[] =
     { LSTRKEY( "run_foobar"), LFUNCVAL ( contrib_run_foobar ) },
     { LSTRKEY( "makecounter"), LFUNCVAL ( contrib_makecounter ) },
 
+    /* Constants for the Temp sensor. */
+    // -- Register address --
+    { LSTRKEY( "TMP006_VOLTAGE" ), LNUMVAL(0x00)},
+    { LSTRKEY( "TMP006_LOCAL_TEMP" ), LNUMVAL(0x01)},
+    { LSTRKEY( "TMP006_CONFIG" ), LNUMVAL(0x02)},
+    { LSTRKEY( "TMP006_MFG_ID" ), LNUMVAL(0xFE)},
+    { LSTRKEY( "TMP006_DEVICE_ID" ), LNUMVAL(0xFF)},
+
+    // -- Config register values
+    { LSTRKEY( "TMP006_CFG_RESET" ), LNUMVAL(0x80)},
+    { LSTRKEY( "TMP006_CFG_MODEON" ), LNUMVAL(0x70)},
+    { LSTRKEY( "TMP006_CFG_1SAMPLE" ), LNUMVAL(0x00)},
+    { LSTRKEY( "TMP006_CFG_2SAMPLE" ), LNUMVAL(0x02)},
+    { LSTRKEY( "TMP006_CFG_4SAMPLE" ), LNUMVAL(0x04)},
+    { LSTRKEY( "TMP006_CFG_8SAMPLE" ), LNUMVAL(0x06)},
+    { LSTRKEY( "TMP006_CFG_16SAMPLE" ), LNUMVAL(0x08)},
+    { LSTRKEY( "TMP006_CFG_DRDYEN" ), LNUMVAL(0x01)},
+    { LSTRKEY( "TMP006_CFG_DRDY" ), LNUMVAL(0x80)},
+
     //The list must end with this
     { LNILKEY, LNILVAL }
 };

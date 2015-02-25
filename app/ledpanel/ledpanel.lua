@@ -1,7 +1,7 @@
 
 require "cord"
 require "math"
-local svcd = require "svcd"
+require "svcd"
 local LED = require "led"
 
 lr = LED:new("D4")
@@ -10,11 +10,11 @@ lb = LED:new("D6")
 
 MOTDs = {"Default message!!1" }
 
-svcd.init("ledpanel", function()
+SVCD.init("ledpanel", function()
     print "starting"
-    svcd.add_service(0x3003)
+    SVCD.add_service(0x3003)
     -- LED flash attribute
-    svcd.add_attribute(0x3003, 0x4005, function(pay, srcip, srcport)
+    SVCD.add_attribute(0x3003, 0x4005, function(pay, srcip, srcport)
         local ps = storm.array.fromstr(pay)
         local lednum = ps:get(1)
         local flashcount = ps:get(2)
@@ -31,7 +31,7 @@ svcd.init("ledpanel", function()
         end
     end)
     -- LED control attribute
-    svcd.add_attribute(0x3003, 0x4006, function(pay, srcip, srcport)
+    SVCD.add_attribute(0x3003, 0x4006, function(pay, srcip, srcport)
         local ps = storm.array.fromstr(pay)
         local lednum = ps:get(1)
         local duration = ps:get_as(storm.array.INT16, 1)
@@ -60,7 +60,7 @@ svcd.init("ledpanel", function()
     end)
 
     -- MOTD attribute
-    svcd.add_attribute(0x3003, 0x4008, function(pay, srcip, srcport)
+    SVCD.add_attribute(0x3003, 0x4008, function(pay, srcip, srcport)
         local parr = storm.array.fromstr(pay)
         -- Little hack to trim the length of the string to 19 max
         -- Because the bluetooth notify only allows 20
@@ -74,7 +74,7 @@ svcd.init("ledpanel", function()
             local msg = MOTDs[math.random(1,#MOTDs)]
             local arr = storm.array.create(#msg+1,storm.array.UINT8)
             arr:set_pstring(0, msg)
-            svcd.notify(0x3003, 0x4008, arr:as_str())
+            SVCD.notify(0x3003, 0x4008, arr:as_str())
             cord.await(storm.os.invokeLater, 3*storm.os.SECOND)
         end
     end)

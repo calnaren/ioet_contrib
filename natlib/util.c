@@ -73,7 +73,7 @@ static int nc_invoke_sleep(lua_State *L, int ticks)
     lua_pushstring(L, "await");
     lua_rawget(L, -2);
     lua_remove(L, -2);
-    lua_pushlightfunction(L, libstorm_os_invokeLater);
+    lua_pushlightfunction(L, libstorm_os_invoke_later);
     lua_pushnumber(L, ticks);
     return cord_invoke_custom(L, 2);
 }
