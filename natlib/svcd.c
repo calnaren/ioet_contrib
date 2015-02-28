@@ -188,7 +188,7 @@ static int svcd_init( lua_State *L )
 }
 
 
-static int svcd_init( lua_State *L )
+static int svcd_wcdispatch( lua_State *L )
 {
     if (lua_gettop(L) != 3) return luaL_error(L, "Expected (pay, srcip, srcport)");
     size_t parlen = lua_objlen(L, -1);
