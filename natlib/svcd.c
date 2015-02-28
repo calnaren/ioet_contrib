@@ -2,7 +2,8 @@
 
 
 #define SVCD_SYMBOLS \
-    { LSTRKEY( "svcd_init"), LFUNCVAL ( svcd_init ) },
+    { LSTRKEY( "svcd_init"), LFUNCVAL ( svcd_init ) }, \
+    { LSTRKEY( "svcd_wcdispatch"), LFUNCVAL ( svcd_wcdispatch ) },
 
 
 //If this file is defining only specific functions, or if it
@@ -184,4 +185,42 @@ static int svcd_init( lua_State *L )
     }
 
     return 0;
+}
+
+
+static int svcd_init( lua_State *L )
+{
+    if (lua_gettop(L) != 3) return luaL_error(L, "Expected (pay, srcip, srcport)");
+    size_t parlen = lua_objlen(L, -1);
+    const char* pay = lua_tolstring(L, -1, &parlen);
+
+    lua_getglobal(L, "SVCD");
+    
+    lua_pushlightfunction(L, libmsgpack_mp_unpack);
+    lua_pushstring(L, pay);
+    lua_call(L, 1, 1);
+    uint16_t ivkid = (uint16_t) luaL_checkString(L, 1);
+
+    char *ivkidstr;
+    sprintf(ivkidstr, "%d", ivkid);
+ 
+    lua_pushstring(L, "handlers");
+    lua_gettable(L, 3);
+    lua_pushstring(L, ivkidstr);
+    lua_gettable(L, 2);
+    
+    if (!lua_isnil(L, 1)) {
+        // Don't have to push handlers again because it is still in the stack
+        lua_pushstring(L, ivkidstr);
+        lua_gettable(L, 3);
+        
+        lua_pushstring(L, "OK");
+        lua_gettable(L, 6);
+        lua_call(L, 1, 0);
+
+        lua_pushstring(L, ivkidstr);
+        lua_pushnil(L);
+        lua_settable(L, 4);
+    }
+    return 0; 
 }
