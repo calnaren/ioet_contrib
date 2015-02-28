@@ -199,9 +199,9 @@ static int svcd_wcdispatch( lua_State *L )
     lua_pushlightfunction(L, libmsgpack_mp_unpack);
     lua_pushstring(L, pay);
     lua_call(L, 1, 1);
-    uint16_t ivkid = (uint16_t) luaL_checkString(L, 1);
+    uint16_t ivkid = (uint16_t) luaL_checkstring(L, 1);
 
-    char *ivkidstr;
+    char ivkidstr[16];
     sprintf(ivkidstr, "%d", ivkid);
  
     lua_pushstring(L, "handlers");
