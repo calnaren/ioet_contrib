@@ -93,13 +93,13 @@ SVCD.init = function(id, onready)
 
 end
 
-SVCD.wcdispatch = function(pay, srcip, srcport)
+SVCD.wcdispatch = storm.n.wcdispatch --[[function(pay, srcip, srcport)
     local ivkid = storm.mp.unpack(pay)
     if SVCD.handlers[ivkid] ~= nil then
         SVCD.handlers[ivkid](SVCD.OK)
         SVCD.handlers[ivkid] = nil
     end
-end
+end]]--
 
 SVCD.write = function (targetip, svcid, attrid, payload, timeout_ms, on_done)
     local ivkid = SVCD.ivkid
