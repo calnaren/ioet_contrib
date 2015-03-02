@@ -2,7 +2,8 @@
 
 
 #define SVCD_SYMBOLS \
-    { LSTRKEY( "svcd_init"), LFUNCVAL ( svcd_init ) },
+    { LSTRKEY( "svcd_init"), LFUNCVAL ( svcd_init ) }, \
+    { LSTRKEY( "svcd_wcdispatch"), LFUNCVAL ( svcd_wcdispatch ) },
 
 
 //If this file is defining only specific functions, or if it
@@ -184,4 +185,40 @@ static int svcd_init( lua_State *L )
     }
 
     return 0;
+}
+
+/*
+ * wcdispatch(pay, srcip, srcport)
+ * Written by: Jochem van Gaalen, Jose Oyola, Naren Vasanad
+*/
+//Takes in pay, srcip, srcport
+static int svcd_wcdispatch( lua_State *L )
+{
+    // Function expects three arguments
+    if (lua_gettop(L) != 3) {
+	return luaL_error(L, "Expected (pay, srcip, srcport)");
+    }
+
+    lua_getglobal(L, "SVCD");
+    lua_pushlightfunction(L, libmsgpack_mp_unpack);
+    lua_pushvalue(L, 1); //push pay onto stack
+    lua_call(L, 1, 1); // ivkid = storm.mp.unpack(pay)
+                       // ivkid is never stored but referenced later
+ 
+    lua_pushstring(L, "handlers");
+    lua_gettable(L, -3); // returns SVCD.handlers
+    lua_pushvalue(L, -2); // push ivkid to top of stack
+    lua_gettable(L, -2); // returns SVCD.handlers[ivkid]
+    
+    // checks if SVCD.handers[ivkid] is not nil
+    if (!lua_isnil(L, -1)) {
+        lua_pushstring(L, "OK"); // push OK
+        lua_gettable(L, 4); // returns SVCD.OK
+        lua_call(L, 1, 0); // calls SVCD.handlers[ivkid](SVCD.OK)
+
+        lua_pushvalue(L, -2); // push ivkid again
+        lua_pushnil(L); // push nil
+        lua_settable(L, -3); // assign SVCD.handlers[ivkid] with nil
+    }
+    return 0; 
 }
