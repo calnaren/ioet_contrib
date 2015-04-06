@@ -30,7 +30,7 @@ end)]]--
 discoveredLED = false
 
 cord.new(function()
-    cord.await(SVCD.init, "ledsupernight")
+    cord.await(SVCD.init, "ledclient")
     SVCD.advert_received = function(pay, srcip, srcport)
         local adv = storm.mp.unpack(pay)
         for k,v in pairs(adv) do
@@ -63,9 +63,9 @@ function setled(position, red, green, blue)
             cmd:set(4, blue)
             local stat = cord.await(SVCD.write, k, 0x3009, 0x400a, cmd:as_str(), 300)
             if stat ~= SVCD.OK then
-                print "FAIL"
+                --print "FAIL"
             else
-                print "OK"
+                --print "OK"
             end
             -- don't spam
             cord.await(storm.os.invokeLater,50*storm.os.MILLISECOND)
@@ -142,12 +142,16 @@ cord.new(function()
                 for i=0,49 do
                         if i <= level then
                                 setled(i, red/8, green/8, blue/8)
+                                cord.await(storm.os.invokeLater, 100*storm.os.MILLISECOND)
                         else
                                 setled(i, 0, 0, 0)
+                                cord.await(storm.os.invokeLater, 100*storm.os.MILLISECOND)
                         end
                 end
                 showled()
-                cord.await(storm.os.invokeLater, 100*storm.os.MILLISECOND)
+                cord.await(storm.os.invokeLater, 1000*storm.os.MILLISECOND)
+            else
+                cord.await(storm.os.invokeLater, 1000*storm.os.MILLISECOND)
             end
         end
 end)
